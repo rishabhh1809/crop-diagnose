@@ -1,0 +1,246 @@
+{
+  // For quick reference: https://containers.dev/implementors/json_reference/
+	"name": "Pytorch GPU",
+	"image": "nvcr.io/nvidia/pytorch:24.12-py3",
+	//"build": {
+	//	"context": "..",
+	//	"dockerfile": "Dockerfile"
+	//},
+	"containerEnv": {
+		"TORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+		"NCCL_P2P_DISABLE": "1",
+		"NCCL_IB_DISABLE": "1",
+		"HF_HOME": "/home/ubuntu/.cache/huggingface",
+		"TRANSFORMERS_CACHE": "/home/ubuntu/.cache/huggingface",
+		"TORCH_HOME": "/home/ubuntu/.cache/torch",
+		"TOKENIZERS_PARALLELISM": "false",
+		"CUDA_DEVICE_MAX_CONNECTIONS": "1",
+		"TORCH_CUDA_ARCH_LIST": "8.9",
+		"UV_PYTHON": "/usr/bin/python",
+		//"UV_PRERELEASE": "allow",
+		"TZ": "Asia/Kolkata",
+		"DEBIAN_FRONTEND": "noninteractive"
+		//"CUBLAS_WORKSPACE_CONFIG": ":16:8"
+	},
+
+	// 1. Use 'forwardPorts' to make a list of ports inside the container available locally.
+	"forwardPorts": [8888, 6006, 8000, 8787],
+	"portsAttributes": {
+		"8888": { "label": "Jupyter" },
+		"6006": { "label": "TensorBoard" },
+		"8000": { "label": "API Server" },
+		"8787": { "label": "Dask Dashboard" }
+	},
+
+	// 2. Use 'mounts' to make a list of local directories available inside the container. More info: https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount
+	"mounts": [
+		"source=devcontainer-uv-cache,target=/home/ubuntu/.cache/uv,type=volume",
+		"source=devcontainer-pip-cache,target=/home/ubuntu/.cache/pip,type=volume",
+		"source=devcontainer-hf-cache,target=/home/ubuntu/.cache/huggingface,type=volume",
+		"source=devcontainer-torch-cache,target=/home/ubuntu/.cache/torch,type=volume",
+		"source=/mnt/e/personal/data,target=/data,type=bind,consistency=cached",
+		"source=/home/rishabhh1809/.ssh/,target=/home/ubuntu/.ssh/,type=bind,readonly"
+	],
+
+	// 3. Use 'runArgs' to pass arguments to the container.
+	// run the container with all GPUs
+	"runArgs": [
+		"--gpus",
+		"all",
+		"-e",
+		"NVIDIA_DRIVER_CAPABILITIES=all",
+		"-it",
+		"--ipc=host",
+		"--ulimit",
+		"memlock=-1",
+		"--ulimit",
+		"stack=67108864",
+		"--cap-add=SYS_PTRACE",
+		"--security-opt=seccomp=unconfined"
+	],
+
+	// 4. Features to add to the Dev Container. More info: https://containers.dev/implementors/features.
+	"features": {
+		// ZSH without OMZ
+		"ghcr.io/devcontainers/features/common-utils:2": {
+		"installZsh": "true",
+		"configureZshAsDefaultShell": "true",
+		"installOhMyZsh": "true",
+		"installOhMyZshConfig": "true",
+		"username": "ubuntu",
+		"userUid": "1000",
+		"userGid": "1000",
+		"upgradePackages": "false"
+		},
+
+		// Python with uv, Ruff, Mypy, MonkeyType and Bandit, installed using pipx
+		"ghcr.io/devcontainers/features/python:1": {
+		"version": "none",
+		"installTools": "true",
+		"toolsToInstall": "uv,ruff,mypy"
+		},
+
+		// node
+		"ghcr.io/devcontainers/features/node:1": {
+			"version": "lts",
+			"nodeGypDependencies": "true",
+			"pnpmVersion": "none",
+			"installYarnUsingApt": "true"
+		},
+
+		// git
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/git-lfs:1": {}
+
+		//"ghcr.io/devcontainers/features/docker-outside-of-docker:1": {
+		//	"moby": "false",
+		//	"dockerDashComposeVersion": "v2",
+		//	"installDockerBuildx": "true",
+		//	"enableNonRootDocker": "true"
+		//}
+	},
+
+	// 5. Configure tool-specific properties.
+	"customizations": {
+		// Configure properties specific to VS Code.
+		"vscode": {
+		// installs useful extensions
+		"extensions": [
+			"ms-python.python",
+			"ms-python.debugpy",
+			"ms-python.vscode-pylance",
+			"ms-python.vscode-python-envs",
+			"ms-python.isort",
+			"ms-toolsai.jupyter",
+			"ms-toolsai.vscode-jupyter-cell-tags",
+			"ms-toolsai.jupyter-renderers",
+			"ms-toolsai.jupyter-keymap",
+			"ms-toolsai.vscode-jupyter-slideshow",
+			"ms-toolsai.vscode-jupyter-powertoys",
+			"ms-toolsai.tensorboard",
+			"ms-toolsai.datawrangler",
+			"charliermarsh.ruff",
+			"esbenp.prettier-vscode",
+			"kiidxatlas.python-hover",
+			"donjayamanne.githistory",
+			"usernamehw.errorlens",
+			"pflannery.vscode-versionlens",
+			"mechatroner.rainbow-csv",
+			"oderwat.indent-rainbow",
+			"vincent-templier.vscode-netron",
+			// "github.copilot",
+			"github.copilot-chat",
+			"repreng.csv",
+			"ms-azuretools.vscode-containers"
+		],
+		// Set *default* container specific settings.json values on container create.
+		"settings": {
+			// --- PYTHON ENVIRONMENT ---
+			// Points to local venv, which links to Global NVIDIA libraries
+			"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+			"python.terminal.activateEnvironment": true,
+			"python.analysis.typeCheckingMode": "basic",
+			"python.languageServer": "Pylance",
+			"python.useEnvironmentsExtension": true,
+			"python.analysis.extraPaths": [
+			"/usr/local/lib/python3.12/dist-packages"
+			],
+			"python.autoComplete.extraPaths": [
+			"/usr/local/lib/python3.12/dist-packages"
+			],
+			"python.analysis.autoImportCompletions": true,
+			"python.analysis.fixAll": [
+			"source.unusedImports",
+			"source.convertImportFormat"
+			],
+
+			// --- CRITICAL ---
+			"files.watcherExclude": {
+			"**/dist/**": true,
+			"**/node_modules/**": true,
+			"**/.git/objects/**": true,
+			"**/.venv/**": true,
+			"**/__pycache__/**": true
+			},
+
+			// --- FORMATTING & LINTING ---
+			"editor.formatOnSave": true,
+			"files.trimTrailingWhitespace": true,
+			"files.autoSave": "onWindowChange",
+			"files.eol": "\n",
+
+			"[python]": {
+			"editor.defaultFormatter": "charliermarsh.ruff",
+			"editor.formatOnType": true,
+			"editor.codeActionsOnSave": { "source.organizeImports": "explicit" }
+			},
+			"[json]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+			"[jsonc]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+
+			// --- TERMINAL & DEBUG ---
+			"editor.tabSize": 4,
+			"terminal.integrated.fontFamily": "JetBrainsMono NFM SemiBold",
+			"terminal.integrated.fontLigatures.enabled": true,
+			"terminal.integrated.gpuAcceleration": "on",
+			"terminal.integrated.enableImages": false,
+			"terminal.integrated.scrollback": 10000,
+
+			"debug.showVariableTypes": true,
+			"debug.confirmOnExit": "always",
+			"debug.terminal.clearBeforeReusing": true,
+
+			// --- UI & UX ---
+			"workbench.iconTheme": "vscode-great-icons",
+			"editor.mouseWheelZoom": false,
+			"editor.bracketPairColorization.enabled": true,
+			"workbench.editor.highlightModifiedTabs": true,
+			"search.smartCase": true,
+			"search.useParentIgnoreFiles": true,
+			"todo-tree.tree.hideTreeWhenEmpty": true,
+
+			"nvidia-smi-plus.executablePath": "/usr/bin/nvidia-smi",
+
+			// --- AI & DATA SCIENCE ---
+			"notebook.formatOnCellExecution": true,
+			"notebook.formatOnSave.enabled": true,
+			"notebook.lineNumbers": "on",
+			"jupyter.themeMatplotlibPlots": true,
+			"jupyter.askForKernelRestart": false,
+
+			// --- AI & copilot ---
+			"github.copilot.enable": { "*": true, "markdown": false },
+			"github.copilot.editor.enableAutoCompletions": true,
+			"github.copilot.chat.codesearch.enabled": true,
+			"github.copilot.chat.notebook.enhancedNextEditSuggestions.enabled": true,
+			"github.copilot.chat.notebook.followCellExecution.enabled": true,
+			"inlineChat.enableV2": true,
+			"inlineChat.notebookAgent": true
+		}
+		}
+	},
+
+	// 6. Set `remoteUser` to `root` to connect as root instead. More info: https://aka.ms/vscode-remote/containers/non-root.
+	"remoteUser": "ubuntu",
+
+	// the following commands are related to container lifecylce. More info: https://containers.dev/implementors/json_reference/#lifecycle-scripts
+
+	// 7. Use 'initializeCommand' to run commands ON THE HOST before container is created or started.
+	// "initializeCommand": "",
+
+	// 8. Use 'onCreateCommand' to run commands INSIDE THE CONTAINER after it started for the first time.
+	// for the nvida containers, sh points to sh-wrap. We want it to point to dash
+	// https://wiki.debian.org/Shell
+	"onCreateCommand": "sudo ln -sf /usr/bin/dash /usr/bin/sh && sudo chown -R ubuntu:ubuntu /home/ubuntu/.cache",
+
+	// 9. Use 'updateContentCommand' to run commands if the root filetree have any changes, during container creation.
+	// "updateContentCommand": "",
+
+	// 10. Use 'postCreateCommand' to run commands after the container is created.
+	"postCreateCommand": "(git config --global --unset core.sshCommand || true) && uv venv .venv --python /usr/bin/python --system-site-packages --allow-existing --no-managed-python && touch requirements.txt && uv pip install --python .venv -r requirements.txt && git lfs install || echo 'Setup Warning'"
+
+	// 11. Use 'postStartCommand' to run a command each time the container starts successfully.
+	// "postStartCommand": "",
+
+	// 12. Use 'postAttachCommand' to run a command each time a tool attaches to the container successfully.
+	// "postAttachCommand": "",
+}

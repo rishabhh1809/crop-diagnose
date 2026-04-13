@@ -1,0 +1,10 @@
+--extra-index-url https://pypi.nvidia.com
+
+# transformers
+# accelerate
+# datasets
+# huggingface-hub
+seaborn
+fastapi[standard]
+# uvicorn[standard]
+python-dotenv
