@@ -3,9 +3,14 @@
     {
       "path": ".",
     },
+    {
+      "path": "./backend",
+    },
+    {
+      "path": "./frontend",
+    },
   ],
   "settings": {
     "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
-    "python.terminal.useEnvFile": false,
   },
 }

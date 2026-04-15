@@ -29,7 +29,8 @@
 		"8888": { "label": "Jupyter" },
 		"6006": { "label": "TensorBoard" },
 		"8000": { "label": "API Server" },
-		"8787": { "label": "Dask Dashboard" }
+		"8787": { "label": "Dask Dashboard" },
+		"5173": { "label": "Frontend Dev Server" }
 	},
 
 	// 2. Use 'mounts' to make a list of local directories available inside the container. More info: https://code.visualstudio.com/remote/advancedcontainers/add-local-file-mount
