@@ -38,7 +38,7 @@
 		"source=devcontainer-pip-cache,target=/home/ubuntu/.cache/pip,type=volume",
 		"source=devcontainer-hf-cache,target=/home/ubuntu/.cache/huggingface,type=volume",
 		"source=devcontainer-torch-cache,target=/home/ubuntu/.cache/torch,type=volume",
-		"source=/mnt/e/personal/data,target=/data,type=bind,consistency=cached",
+		"source=/home/rishabhh1809/personal/data,target=/data,type=bind,consistency=cached",
 		"source=/home/rishabhh1809/.ssh/,target=/home/ubuntu/.ssh/,type=bind,readonly"
 	],
 
@@ -121,7 +121,6 @@
 			"ms-toolsai.datawrangler",
 			"charliermarsh.ruff",
 			"esbenp.prettier-vscode",
-			"kiidxatlas.python-hover",
 			"donjayamanne.githistory",
 			"usernamehw.errorlens",
 			"pflannery.vscode-versionlens",
@@ -137,7 +136,7 @@
 		"settings": {
 			// --- PYTHON ENVIRONMENT ---
 			// Points to local venv, which links to Global NVIDIA libraries
-			"python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
+			// "python.defaultInterpreterPath": "${workspaceFolder}/.venv/bin/python",
 			"python.terminal.activateEnvironment": true,
 			"python.analysis.typeCheckingMode": "basic",
 			"python.languageServer": "Pylance",
@@ -236,7 +235,9 @@
 	// "updateContentCommand": "",
 
 	// 10. Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "(git config --global --unset core.sshCommand || true) && uv venv .venv --python /usr/bin/python --system-site-packages --allow-existing --no-managed-python && touch requirements.txt && uv pip install --python .venv -r requirements.txt && git lfs install || echo 'Setup Warning'"
+	//"postCreateCommand": "(git config --global --unset core.sshCommand || true) && uv venv .venv --python /usr/bin/python --system-site-packages --allow-existing --no-managed-python && touch requirements.txt && uv pip install --python .venv -r requirements.txt && git lfs install || echo 'Setup Warning'"
+	"postCreateCommand": "(git config --global --unset core.sshCommand || true) && git lfs install || echo 'Setup Warning'"
+
 
 	// 11. Use 'postStartCommand' to run a command each time the container starts successfully.
 	// "postStartCommand": "",
