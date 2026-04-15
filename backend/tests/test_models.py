@@ -12,7 +12,6 @@ Run with:  pytest tests/test_api.py -v
 
 from __future__ import annotations
 
-import base64
 import io
 from unittest.mock import MagicMock, patch
 
@@ -25,11 +24,11 @@ from PIL import Image
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 
 
-def _solid_jpeg_b64(colour: tuple = (100, 180, 60)) -> str:
+def _solid_jpeg_bytes(colour: tuple = (100, 180, 60)) -> bytes:
     img = Image.new("RGB", (640, 480), colour)
     buf = io.BytesIO()
     img.save(buf, format="JPEG", quality=85)
-    return base64.b64encode(buf.getvalue()).decode()
+    return buf.getvalue()
 
 
 FAKE_CLASSES = [
@@ -82,11 +81,17 @@ async def client(mock_model_session):
 @pytest.mark.asyncio
 class TestPredictEndpoint:
     async def test_returns_200_on_valid_frame(self, client):
-        resp = await client.post("/api/predict", json={"frame": _solid_jpeg_b64()})
+        resp = await client.post(
+            "/api/predict",
+            files={"file": ("image.jpg", _solid_jpeg_bytes(), "image/jpeg")},
+        )
         assert resp.status_code == 200
 
     async def test_response_shape(self, client):
-        resp = await client.post("/api/predict", json={"frame": _solid_jpeg_b64()})
+        resp = await client.post(
+            "/api/predict",
+            files={"file": ("image.jpg", _solid_jpeg_bytes(), "image/jpeg")},
+        )
         data = resp.json()
         assert "label" in data
         assert "confidence" in data
@@ -94,39 +99,51 @@ class TestPredictEndpoint:
         assert "latency_ms" in data
 
     async def test_label_is_string(self, client):
-        resp = await client.post("/api/predict", json={"frame": _solid_jpeg_b64()})
+        resp = await client.post(
+            "/api/predict",
+            files={"file": ("image.jpg", _solid_jpeg_bytes(), "image/jpeg")},
+        )
         assert isinstance(resp.json()["label"], str)
 
     async def test_confidence_in_range(self, client):
-        resp = await client.post("/api/predict", json={"frame": _solid_jpeg_b64()})
+        resp = await client.post(
+            "/api/predict",
+            files={"file": ("image.jpg", _solid_jpeg_bytes(), "image/jpeg")},
+        )
         conf = resp.json()["confidence"]
         assert 0.0 <= conf <= 1.0
 
     async def test_top_k_length(self, client):
-        resp = await client.post("/api/predict", json={"frame": _solid_jpeg_b64()})
+        resp = await client.post(
+            "/api/predict",
+            files={"file": ("image.jpg", _solid_jpeg_bytes(), "image/jpeg")},
+        )
         assert len(resp.json()["top_k"]) == len(FAKE_RESULT.top_k)
 
     async def test_returns_422_on_empty_frame(self, client):
-        resp = await client.post("/api/predict", json={"frame": ""})
+        # Even with UploadFile, an empty file might be a 422 if it fails to decode as image
+        resp = await client.post(
+            "/api/predict", files={"file": ("image.jpg", b"", "image/jpeg")}
+        )
         assert resp.status_code == 422
 
-    async def test_returns_422_on_corrupt_base64(self, client):
-        resp = await client.post("/api/predict", json={"frame": "!!!notbase64!!!"})
-        assert resp.status_code == 422
+    async def test_returns_415_on_unsupported_media_type(self, client):
+        resp = await client.post(
+            "/api/predict",
+            files={"file": ("image.txt", b"!!!notbase64!!!", "text/plain")},
+        )
+        assert resp.status_code == 415
 
-    async def test_returns_422_on_missing_frame_field(self, client):
-        resp = await client.post("/api/predict", json={})
+    async def test_returns_422_on_missing_file_field(self, client):
+        resp = await client.post("/api/predict")
         assert resp.status_code == 422
-
-    async def test_accepts_data_url_prefix(self, client):
-        b64 = _solid_jpeg_b64()
-        with_prefix = f"data:image/jpeg;base64,{b64}"
-        resp = await client.post("/api/predict", json={"frame": with_prefix})
-        assert resp.status_code == 200
 
     async def test_503_when_model_not_ready(self, client, mock_model_session):
         mock_model_session.is_ready = False
-        resp = await client.post("/api/predict", json={"frame": _solid_jpeg_b64()})
+        resp = await client.post(
+            "/api/predict",
+            files={"file": ("image.jpg", _solid_jpeg_bytes(), "image/jpeg")},
+        )
         assert resp.status_code == 503
 
 

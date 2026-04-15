@@ -5,8 +5,7 @@
 # datasets
 # huggingface-hub
 seaborn
-fastapi
-uvicorn
+fastapi[standard]
 python-dotenv
 onnxruntime
 # onnxruntime-gpu

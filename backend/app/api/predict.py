@@ -20,22 +20,10 @@ from app.config import settings
 from app.core.model import PredictResult, model_session
 from app.core.preprocessing import PreprocessingError, preprocess_frame
 from app.logging import get_logger
-from app.schemas.predict import (
-    ClassesResponse,
-    ClassProbability,
-    HealthResponse,
-    PredictResponse,
-)
-from fastapi import (
-    APIRouter,
-    File,
-    HTTPException,
-    Request,
-    UploadFile,
-    WebSocket,
-    WebSocketDisconnect,
-    status,
-)
+from app.schemas.predict import (ClassesResponse, ClassProbability,
+                                 HealthResponse, PredictResponse)
+from fastapi import (APIRouter, File, HTTPException, Request, UploadFile,
+                     WebSocket, WebSocketDisconnect, status)
 from fastapi.concurrency import run_in_threadpool
 
 log = get_logger(__name__)
@@ -69,10 +57,19 @@ async def predict(request: Request, file: UploadFile = File(...)) -> PredictResp
 
     t_total = time.perf_counter()
 
+    # ── Mime Type Check ────────────────────────────────────────────────────
+    ALLOWED_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
+    if file.content_type not in ALLOWED_CONTENT_TYPES:
+        bound_log.warning("Unsupported file type", content_type=file.content_type)
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail=f"Unsupported file type: {file.content_type}",
+        )
+
     # ── Preprocessing ──────────────────────────────────────────────────────
     try:
         image_bytes = await file.read()
-        input_array = preprocess_frame(image_bytes)
+        input_array = await run_in_threadpool(preprocess_frame, image_bytes)
     except PreprocessingError as exc:
         bound_log.warning("Frame preprocessing failed", error=str(exc))
         raise HTTPException(
@@ -140,11 +137,16 @@ async def predict_stream(websocket: WebSocket) -> None:
             # 1. Wait for the next binary frame
             image_bytes = await websocket.receive_bytes()
 
+            MAX_FRAME_BYTES = 5 * 1024 * 1024  # 5 MB
+            if len(image_bytes) > MAX_FRAME_BYTES:
+                await websocket.send_json({"error": "Frame too large"})
+                continue
+
             t_total = time.perf_counter()
 
             # 2. Preprocessing
             try:
-                input_array = preprocess_frame(image_bytes)
+                input_array = await run_in_threadpool(preprocess_frame, image_bytes)
             except PreprocessingError as exc:
                 bound_log.warning("WS frame preprocessing failed", error=str(exc))
                 await websocket.send_json({"error": f"Cannot process frame: {exc}"})
