@@ -1,16 +1,18 @@
 --extra-index-url https://pypi.nvidia.com
 
+fastapi[standard]
+python-dotenv
+onnxruntime
+pydantic-settings
+structlog
+python-multipart
+numpy<2
+pytest_asyncio
+
+
 # transformers
 # accelerate
 # datasets
 # huggingface-hub
-seaborn
-fastapi[standard]
-python-dotenv
-onnxruntime
+# seaborn
 # onnxruntime-gpu
-pydantic-settings
-structlog
-python-multipart
-"numpy<2"
-pytest_asyncio

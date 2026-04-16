@@ -79,8 +79,8 @@ class TestCentreCropSquare:
         img.paste(centre_region, (100, 0))
         cropped = _centre_crop_square(img)
         # All pixels in the 100×100 crop should be red.
-        pixels = list(cropped.getdata())
-        assert all(p == (255, 0, 0) for p in pixels)
+        pixels = np.array(cropped)
+        assert np.all(pixels == [255, 0, 0])
 
 
 # ── _resize ───────────────────────────────────────────────────────────────────
