@@ -11,7 +11,7 @@ import type { PredictResponse } from '$lib/api/client';
 // Rolling buffer size for live-stream smoothing.
 const BUFFER_SIZE = 3;
 // Minimum confidence to show a result (below this → "Scanning…").
-export const CONFIDENCE_THRESHOLD = 0.75;
+export const CONFIDENCE_THRESHOLD = 0.65;
 
 export type PredictionStatus = 'idle' | 'loading' | 'success' | 'error';
 
