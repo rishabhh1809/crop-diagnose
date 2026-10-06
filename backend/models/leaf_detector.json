@@ -1,0 +1,9 @@
+{
+  "method": "pretrained mobilenet_v3_large + PCA + mahalanobis (one-class)",
+  "decision": "leaf if distance <= threshold",
+  "threshold": 284.5027626270451,
+  "reject_percentile": 99.0,
+  "pca_dims": 128,
+  "input_size": 256,
+  "pixel_scale": 0.00392156862745098
+}
