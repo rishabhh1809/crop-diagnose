@@ -15,6 +15,8 @@ import io
 
 import numpy as np
 import pytest
+from PIL import Image
+
 from app.core.preprocessing import (
     PreprocessingError,
     _centre_crop_square,
@@ -23,7 +25,6 @@ from app.core.preprocessing import (
     _to_chw_float32,
     preprocess_frame,
 )
-from PIL import Image
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

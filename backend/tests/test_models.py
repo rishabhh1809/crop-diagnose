@@ -17,9 +17,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 import pytest_asyncio
-from app.core.model import PredictResult, TopPrediction
 from httpx import ASGITransport, AsyncClient
 from PIL import Image
+
+from app.core.model import PredictResult, TopPrediction
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
 

@@ -1,13 +1,16 @@
 --extra-index-url https://pypi.nvidia.com
 
 fastapi[standard]
-python-dotenv
-onnxruntime
+
 pydantic-settings
 structlog
 python-multipart
+
 numpy<2
+pillow
 pytest_asyncio
+python-dotenv
+onnxruntime
 
 
 # transformers

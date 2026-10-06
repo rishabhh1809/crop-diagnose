@@ -18,9 +18,10 @@ from __future__ import annotations
 import io
 
 import numpy as np
+from PIL import Image
+
 from app.config import settings
 from app.logging import get_logger
-from PIL import Image
 
 log = get_logger(__name__)
 
