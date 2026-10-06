@@ -39,7 +39,18 @@
 			<p class="error-msg">{error}</p>
 		</div>
 	{:else if status === 'success' && result && parsed}
-		{#if predictionStore.showResult}
+		{#if result.label === 'Not a Leaf'}
+			<div class="state-result" style="--signal: var(--forest-mist)">
+				<!-- Signal indicator -->
+				<div class="signal-dot" aria-hidden="true" style="background: var(--forest-mist); box-shadow: none"></div>
+
+				<!-- Title -->
+				<h3 class="condition" style="color: var(--forest-mist); font-size: 1.6rem; margin-top: 4px;">
+					Not a Leaf
+				</h3>
+				<p class="plant-name" style="margin-bottom: 8px;">Please show a plant leaf</p>
+			</div>
+		{:else if predictionStore.showResult}
 			<div class="state-result" style="--signal: {color}">
 				<!-- Signal indicator -->
 				<div class="signal-dot" aria-hidden="true"></div>
