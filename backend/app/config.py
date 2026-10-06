@@ -33,6 +33,14 @@ class Settings(BaseSettings):
         default=Path("models/classes.json"),
         description="Path to the JSON file mapping class index → label.",
     )
+    leaf_model_path: Path = Field(
+        default=Path("models/leaf_detector.onnx"),
+        description="Path to the leaf detector ONNX model file.",
+    )
+    leaf_meta_path: Path = Field(
+        default=Path("models/leaf_detector.json"),
+        description="Path to the leaf detector metadata (threshold).",
+    )
     # ONNX execution providers in priority order.
     # On a GPU host set: ONNX_PROVIDERS='["CUDAExecutionProvider","CPUExecutionProvider"]'
     onnx_providers: list[str] = Field(

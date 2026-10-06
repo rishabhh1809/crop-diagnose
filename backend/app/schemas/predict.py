@@ -13,6 +13,7 @@ from pydantic import BaseModel, Field
 
 # ── Response ──────────────────────────────────────────────────────────────────
 
+
 class ClassProbability(BaseModel):
     """A single class label with its softmax confidence score."""
 
@@ -44,21 +45,24 @@ class PredictResponse(BaseModel):
         description="ONNX inference time in milliseconds (excludes preprocessing).",
     )
 
-    model_config = {"json_schema_extra": {
-        "example": {
-            "label": "Tomato___Late_blight",
-            "confidence": 0.9421,
-            "top_k": [
-                {"label": "Tomato___Late_blight", "confidence": 0.9421},
-                {"label": "Tomato___Early_blight", "confidence": 0.0412},
-                {"label": "Tomato___healthy", "confidence": 0.0167},
-            ],
-            "latency_ms": 23.4,
+    model_config = {
+        "json_schema_extra": {
+            "example": {
+                "label": "Tomato___Late_blight",
+                "confidence": 0.9421,
+                "top_k": [
+                    {"label": "Tomato___Late_blight", "confidence": 0.9421},
+                    {"label": "Tomato___Early_blight", "confidence": 0.0412},
+                    {"label": "Tomato___healthy", "confidence": 0.0167},
+                ],
+                "latency_ms": 23.4,
+            }
         }
-    }}
+    }
 
 
 # ── Health ────────────────────────────────────────────────────────────────────
+
 
 class HealthResponse(BaseModel):
     status: str = Field(..., description="'ok' when the model is loaded and ready.")
@@ -69,6 +73,7 @@ class HealthResponse(BaseModel):
 
 
 # ── Classes ───────────────────────────────────────────────────────────────────
+
 
 class ClassesResponse(BaseModel):
     classes: list[str] = Field(

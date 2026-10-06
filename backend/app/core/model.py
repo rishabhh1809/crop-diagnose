@@ -23,6 +23,7 @@ from typing import cast
 
 import numpy as np
 import onnxruntime as ort
+
 from app.config import settings
 from app.logging import get_logger
 
@@ -61,12 +62,18 @@ class ModelSession:
         self._classes: list[str] = []
         self._input_name: str = ""
 
+        self._leaf_session: ort.InferenceSession | None = None
+        self._leaf_input_name: str = ""
+        self._leaf_threshold: float = float("inf")
+
     # ── Lifecycle ─────────────────────────────────────────────────────────
 
     def load(
         self,
         model_path: Path = settings.model_path,
         classes_path: Path = settings.classes_path,
+        leaf_model_path: Path = settings.leaf_model_path,
+        leaf_meta_path: Path = settings.leaf_meta_path,
         providers: list[str] = settings.onnx_providers,
     ) -> None:
         """
@@ -92,12 +99,26 @@ class ModelSession:
 
         self._classes = _load_classes(classes_path)
 
+        # Load Leaf Detector
+        if leaf_model_path.exists() and leaf_meta_path.exists():
+            log.info("Loading Leaf Detector ONNX model", path=str(leaf_model_path))
+            self._leaf_session = ort.InferenceSession(
+                str(leaf_model_path),
+                sess_options=sess_options,
+                providers=providers,
+            )
+            self._leaf_input_name = self._leaf_session.get_inputs()[0].name
+            with leaf_meta_path.open("r", encoding="utf-8") as fh:
+                meta = json.load(fh)
+                self._leaf_threshold = float(meta["threshold"])
+
         elapsed = (time.perf_counter() - t0) * 1000
         log.info(
             "Model ready",
             num_classes=len(self._classes),
             load_ms=round(elapsed, 1),
             active_provider=self._session.get_providers()[0],
+            leaf_detector_loaded=self._leaf_session is not None,
         )
 
     def unload(self) -> None:
@@ -138,6 +159,18 @@ class ModelSession:
             top_k=top_k,
             latency_ms=round(latency_ms, 2),
         )
+
+    def predict_is_leaf(self, input_array: np.ndarray) -> bool:
+        """
+        Run anomaly detection to check if the image is a leaf.
+        If the leaf detector model is not loaded, defaults to True (bypass).
+        """
+        if self._leaf_session is None:
+            return True
+
+        results = self._leaf_session.run(None, {self._leaf_input_name: input_array})
+        distance: float = float(results[0][0])
+        return distance <= self._leaf_threshold
 
 
 # ── Internal helpers ──────────────────────────────────────────────────────────

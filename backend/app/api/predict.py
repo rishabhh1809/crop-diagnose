@@ -16,15 +16,28 @@ from __future__ import annotations
 
 import time
 
+from fastapi import (
+    APIRouter,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+    WebSocket,
+    WebSocketDisconnect,
+    status,
+)
+from fastapi.concurrency import run_in_threadpool
+
 from app.config import settings
-from app.core.model import PredictResult, model_session
+from app.core.model import PredictResult, TopPrediction, model_session
 from app.core.preprocessing import PreprocessingError, preprocess_frame
 from app.logging import get_logger
-from app.schemas.predict import (ClassesResponse, ClassProbability,
-                                 HealthResponse, PredictResponse)
-from fastapi import (APIRouter, File, HTTPException, Request, UploadFile,
-                     WebSocket, WebSocketDisconnect, status)
-from fastapi.concurrency import run_in_threadpool
+from app.schemas.predict import (
+    ClassesResponse,
+    ClassProbability,
+    HealthResponse,
+    PredictResponse,
+)
 
 log = get_logger(__name__)
 
@@ -32,6 +45,7 @@ router = APIRouter(prefix="/api", tags=["inference"])
 
 
 # ── POST /api/predict ─────────────────────────────────────────────────────────
+
 
 @router.post(
     "/predict",
@@ -79,7 +93,17 @@ async def predict(request: Request, file: UploadFile = File(...)) -> PredictResp
 
     # ── Inference ──────────────────────────────────────────────────────────
     try:
-        result: PredictResult = await run_in_threadpool(model_session.predict, input_array)
+        is_leaf: bool = await run_in_threadpool(
+            model_session.predict_is_leaf, input_array
+        )
+        if not is_leaf:
+            result = PredictResult(
+                top=TopPrediction(label="Not a Leaf", confidence=1.0),
+                top_k=[TopPrediction(label="Not a Leaf", confidence=1.0)],
+                latency_ms=0.0,
+            )
+        else:
+            result = await run_in_threadpool(model_session.predict, input_array)
     except Exception as exc:
         bound_log.error("Inference failed", error=str(exc), exc_info=True)
         raise HTTPException(
@@ -154,9 +178,17 @@ async def predict_stream(websocket: WebSocket) -> None:
 
             # 3. Inference
             try:
-                result: PredictResult = await run_in_threadpool(
-                    model_session.predict, input_array
+                is_leaf: bool = await run_in_threadpool(
+                    model_session.predict_is_leaf, input_array
                 )
+                if not is_leaf:
+                    result = PredictResult(
+                        top=TopPrediction(label="Not a Leaf", confidence=1.0),
+                        top_k=[TopPrediction(label="Not a Leaf", confidence=1.0)],
+                        latency_ms=0.0,
+                    )
+                else:
+                    result = await run_in_threadpool(model_session.predict, input_array)
             except Exception as exc:
                 bound_log.error("WS inference failed", error=str(exc), exc_info=True)
                 await websocket.send_json(
@@ -201,6 +233,7 @@ async def predict_stream(websocket: WebSocket) -> None:
 
 # ── GET /api/health ───────────────────────────────────────────────────────────
 
+
 @router.get(
     "/health",
     response_model=HealthResponse,
@@ -222,6 +255,7 @@ async def health() -> HealthResponse:
 
 
 # ── GET /api/classes ──────────────────────────────────────────────────────────
+
 
 @router.get(
     "/classes",
